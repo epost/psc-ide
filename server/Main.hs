@@ -66,9 +66,10 @@ startServer port st_in =
         case parseCommand cmd of
             Right cmd' -> do
                 result <- handleCommand cmd'
-                liftIO $ T.hPutStrLn h result
-            Left err -> liftIO $ hPrint h err
+                liftIO $ hPutStrLn h (escape . T.unpack $ result)
+            Left err -> liftIO $ hPutStrLn h (escape . show $ err)
         liftIO $ hClose h
+    escape = show
 
 handleCommand :: Command -> PscIde T.Text
 handleCommand (TypeLookup ident) = fromMaybe "Not found" <$> findTypeForName ident
