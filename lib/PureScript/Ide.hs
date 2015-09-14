@@ -36,13 +36,13 @@ findType search filters =
 findPursuitCompletions :: Text -> PscIde [Completion]
 findPursuitCompletions = liftIO . searchPursuit
 
-loadExtern :: FilePath -> PscIde ()
+loadExtern :: FilePath -> PscIde (Either Err [ExternDecl])
 loadExtern fp = do
     parseResult <- liftIO $ readExternFile fp
     case parseResult of
         Right decls ->
             let (name, decls') = unsafeModuleFromDecls decls
-            in modify
+            in do modify
                    (\x ->
                          x
                          { pscStateModules = M.insert
@@ -50,7 +50,8 @@ loadExtern fp = do
                                decls'
                                (pscStateModules x)
                          })
-        Left _ -> liftIO $ putStrLn "The module could not be parsed"
+                  return $ Right decls'
+        l -> return l
 
 getDependenciesForModule :: ModuleIdent -> PscIde (Maybe [ModuleIdent])
 getDependenciesForModule m = do
@@ -93,10 +94,10 @@ loadModule :: ModuleIdent -> PscIde (Either Err T.Text)
 loadModule mn = do
     path <- liftIO $ filePathFromModule mn
     case path of
-        Right p  -> loadExtern p >> return (Right $ "Loaded extern file at: " <> T.pack p)
-        Left _ -> return (Left . GeneralErr $ "Could not load module " <> T.unpack mn)
+        Right p -> loadExtern p >> return (Right $ "Loaded extern file at: " <> T.pack p)
+        Left err -> return (Left err)
 
-filePathFromModule :: ModuleIdent -> IO (Either T.Text FilePath)
+filePathFromModule :: ModuleIdent -> IO (Either Err FilePath)
 filePathFromModule moduleName = do
     cwd <- getCurrentDirectory
     let path = cwd </> "output" </> T.unpack moduleName </> "externs.purs"
@@ -104,7 +105,7 @@ filePathFromModule moduleName = do
     return $
         if ex
             then Right path
-            else Left ("Extern file for module " <> moduleName <>" could not be found")
+            else Left (ModuleNotLoaded moduleName)
 
 -- | Taken from Data.Either.Utils
 maybeToEither :: MonadError e m =>

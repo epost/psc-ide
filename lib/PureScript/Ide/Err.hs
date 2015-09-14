@@ -21,6 +21,7 @@ data Err
     = GeneralErr ErrMsg
     | NotFound Ident
     | ModuleNotFound ModuleIdent
+    | ModuleFileNotFound ModuleIdent
     | ParseErr P.ParseError ErrMsg
     deriving (Show, Eq)
 
@@ -30,6 +31,7 @@ textErr :: Err -> Text
 textErr (GeneralErr msg)             = pack msg
 textErr (NotFound ident)             = "Symbol '" <> ident <> "' not found."
 textErr (ModuleNotFound ident)       = "Module '" <> ident <> "' not found."
+textErr (ModuleFileNotFound ident)   = "Extern file for module " <> ident <>" could not be found"
 textErr (ParseErr parseErr msg)      = pack $ msg <> ": " <> show (escape parseErr)
     where
     -- escape newlines and other special chars so we can send the error over the socket as a single line
