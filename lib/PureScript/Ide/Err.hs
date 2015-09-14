@@ -12,7 +12,7 @@ module PureScript.Ide.Err
 
 import           Data.Monoid
 import           Data.Text              (Text, pack, unpack)
-import           PureScript.Ide.Externs (ModuleIdent)
+import           PureScript.Ide.Types   (ModuleIdent)
 import qualified Text.Parsec.Error      as P
 
 type ErrMsg = String
